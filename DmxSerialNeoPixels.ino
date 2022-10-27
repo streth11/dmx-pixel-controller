@@ -12,7 +12,8 @@
 // - - - - -
 #include <Arduino.h>
 #include <DMXSerial.h>
-#include "ws2812.h"
+// #include "ws2812.h"
+#include "re_write_ws2812.h"
 
 
 const int dipPins[10]{A0,A1,A2,A3,A4,A5,5,4,3,2};
@@ -31,12 +32,24 @@ uint16_t checkDip(){
 
 
 
+#define PIXEL_PORT  PORTD  // Port of the pin the pixels are connected to
+#define PIXEL_DDR   DDRD   // Port of the pin the pixels are connected to
+#define PIXEL_BIT   6      // Bit of the pin the pixels are connected to
+#define PIXEL2_PORT  PORTB  // Port of the pin the pixels are connected to
+#define PIXEL2_DDR   DDRB   // Port of the pin the pixels are connected to
+#define PIXEL2_BIT   1      // Bit of the pin the pixels are connected to
 
+void setupNeopixel() {
+  bitSet( PIXEL_DDR , PIXEL_BIT );
+//  bitSet( PIXEL2_DDR , PIXEL2_BIT );
+} 
 
+//const uint8_t* pixel_port = _SFR_IO_ADDR(PORTD);
+//const uint8_t* pixel_ddr = DDRD;
+//const int pixel_bit = 6;
 
-
-
-
+//PixelSet <_SFR_IO_ADDR(PORTD),DDRD,6> forwardsNeopixels(1);
+//PixelSet <PIXEL2_PORT,PIXEL2_DDR,PIXEL2_BIT> backwardsNeopixels(0);
 
 
 // Constants for demo program
@@ -55,6 +68,8 @@ uint16_t checkDip(){
 // number of DMX channels used
 #define DMXLENGTH (PIXELS*6)
 
+
+
 // Initialize DMXSerial and neo pixel output
 void setup () {
   for(int pin=0;pin<10;pin++){
@@ -71,14 +86,15 @@ void setup () {
   DMXSerial.maxChannel(DMXLENGTH); // after 3 * pixel channels, the onUpdate will be called when new data arrived.
 
   // setup the neopixel output
-  setupNeopixel();
+
+   setupNeopixel();
   for (int p = 0; p < PIXELS*2; p++) {
     DMXSerial.write(n++, 5);
     DMXSerial.write(n++, 10);
     DMXSerial.write(n++, 20);
   }
-  updateNeopixel(DMXSerial.getBuffer() + DMXSTART, PIXELS);
-  updateNeopixel2(DMXSerial.getBuffer() + DMXSTART+150, PIXELS);
+  updateNeopixel<_SFR_IO_ADDR(PORTD),6>(DMXSerial.getBuffer() + DMXSTART, PIXELS,1);
+//  backwardsNeopixels.updateNeopixel(DMXSerial.getBuffer() + DMXSTART+150, PIXELS);
 
   // give them a decent color...
 
@@ -99,8 +115,8 @@ void loop() {
   
   // wait for an incomming DMX packet.
   if (DMXSerial.receive()) {
-    updateNeopixel(DMXSerial.getBuffer() +DMXSTART, 50);
-    updateNeopixel2(DMXSerial.getBuffer()+ DMXSTART+300, 50);
+    updateNeopixel<_SFR_IO_ADDR(PORTD),6>(DMXSerial.getBuffer() +DMXSTART, 50,1);
+//    backwardsNeopixels.updateNeopixel(DMXSerial.getBuffer()+ DMXSTART+300, 50);
 
   } // if
   

@@ -1,68 +1,13 @@
-// neopixel.h
-
-
-/*
-  The Neopixel driving routines are taken from the article and sketch from bigjosh
-  http://wp.josh.com/2014/05/13/ws2812-neopixels-are-not-so-finicky-once-you-get-to-know-them/
-  where the interrupt cli() and sei() are included in the sendBit function.
-  At the sources from his github this is not the case but it's important for the usage with DMXSerial library.
-  (see https://github.com/bigjosh/SimpleNeoPixelDemo )
-
-  These routines fit very good to the DMXSerial implementation because they switch on and off the
-  Interrupt
-
-  On DMX usual channels are used in the red then green then blue order.
-  Neopixel wants colors in green then red then blue order so the 2 channels are switched.
-*/
-
-// ----- global defines from josh: -----
-
-// These values are for the pin that connects to the Data Input pin on the LED strip. They correspond to...
 
 #define PIXEL_PORT  PORTD  // Port of the pin the pixels are connected to
 #define PIXEL_DDR   DDRD   // Port of the pin the pixels are connected to
 #define PIXEL_BIT   6      // Bit of the pin the pixels are connected to
+
 #define PIXEL2_PORT  PORTB  // Port of the pin the pixels are connected to
 #define PIXEL2_DDR   DDRB   // Port of the pin the pixels are connected to
 #define PIXEL2_BIT   1      // Bit of the pin the pixels are connected to
 
-// This re3sults in the following Arduino Pins:
-// Arduino Yun:     Digital Pin 8
-// DueMilinove/UNO: Digital Pin 12
-// Arduino Mega     PWM Pin 4
 
-// You'll need to look up the port/bit combination for other boards.
-// Note that you could also include the DigitalWriteFast header file to not need to to this lookup.
-
-// These are the timing constraints taken mostly from the WS2812 datasheets
-// These are chosen to be conservative and avoid problems rather than for maximum throughput
-
-#define T1H  900    // Width of a 1 bit in ns
-#define T1L  600    // Width of a 1 bit in ns
-
-#define T0H  400    // Width of a 0 bit in ns
-#define T0L  900    // Width of a 0 bit in ns
-
-#define RES 6000    // Width of the low gap between bits to cause a frame to latch
-
-// Here are some convience defines for using nanoseconds specs to generate actual CPU delays
-
-#define NS_PER_SEC (1000000000L)          // Note that this has to be SIGNED since we want to be able to check for negative values of derivatives
-
-#define CYCLES_PER_SEC (F_CPU)
-
-#define NS_PER_CYCLE ( NS_PER_SEC / CYCLES_PER_SEC )
-
-#define NS_TO_CYCLES(n) ( (n) / NS_PER_CYCLE )
-
-#define DELAY_CYCLES(n) ( ((n)>0) ? __builtin_avr_delay_cycles( n ) :  __builtin_avr_delay_cycles( 0 ) )  // Make sure we never have a delay less than zero
-
-void setupNeopixel() {
-  bitSet( PIXEL_DDR , PIXEL_BIT );
-  bitSet( PIXEL2_DDR , PIXEL2_BIT );
-} // setupNeopixel()
-
-// Low level function with mixed in assembler code.
 
 // Actually send a bit to the string. We turn off optimizations to make sure the compile does
 // not reorder things and make it so the delay happens in the wrong place.
